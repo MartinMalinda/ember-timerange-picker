@@ -11,7 +11,7 @@ export default Ember.Component.extend({
 
 	style: Ember.computed('offsetX', function(){
 		// if(this.get('dragging')){
-			return Ember.String.htmlSafe(`left:${this.get('offsetX') - this.get('markerWidth')/2}px `);
+			return Ember.String.htmlSafe(`transform:translateX(${this.get('offsetX') - this.get('markerWidth')/2}px) `);
 		// }
 	}),
 

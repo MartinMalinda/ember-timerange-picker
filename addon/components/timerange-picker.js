@@ -64,8 +64,11 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	mouseMove(event){
 		var nowDragging = this.get('nowDragging');
-		if(nowDragging){
-			this.set(nowDragging+'OffsetX', event.clientX - this.get('positionLeft') - this.get('markerWidth')/2);
+
+		var relativeX = event.clientX - this.get('positionLeft');
+
+		if(nowDragging && relativeX > 0 && relativeX < this.get('width')){
+			this.set(nowDragging+'OffsetX', relativeX);
 		}
 	},
 	mouseUp(){

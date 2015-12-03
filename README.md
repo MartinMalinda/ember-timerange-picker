@@ -1,25 +1,12 @@
 # Ember-timerange-picker
 
-This README outlines the details of collaborating on this Ember addon.
+##WIP
 
-## Installation
+ToDO
 
-* `git clone` this repository
-* `npm install`
-* `bower install`
-
-## Running
-
-* `ember server`
-* Visit your app at http://localhost:4200.
-
-## Running Tests
-
-* `ember test`
-* `ember test --server`
-
-## Building
-
-* `ember build`
-
-For more information on using ember-cli, visit [http://www.ember-cli.com/](http://www.ember-cli.com/).
+ - [ ] interval set by a param
+ - [ ] get marker width on didInsertElement
+ - [ ] prevent markers from colliding
+ - [ ] write tests
+ - [ ] implement empty area to easily drag markers to the max and min sides (current solution is UX fail)
+ - [ ] render into SVG (optionally?)

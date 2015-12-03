@@ -1,0 +1,20 @@
+{{fromValue}} - {{toValue}}
+	<div class="line"></div>
+	{{#timerange-marker 
+		offsetX=fromOffsetXStepped type="start" 
+		type="from"
+		positionLeft=positionLeft
+		startDragging=(action "startDragging") 
+		endDragging=(action "endDragging")
+	}}
+	{{/timerange-marker}}
+	
+	{{#timerange-marker 
+		offsetX=toOffsetXStepped type="end" 
+		type="to"
+		positionLeft=positionLeft
+		startDragging=(action "startDragging") 
+		endDragging=(action "endDragging")
+
+	}}
+	{{/timerange-marker}}

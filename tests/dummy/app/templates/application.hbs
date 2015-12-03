@@ -1,3 +1,7 @@
-<h2 id="title">Welcome to Ember</h2>
+<h1 id="title">Ember timerange-picker</h1>
+{{!-- afterDrag=(action "updateOpeningHours" ) --}}
+{{timerange-picker class="time-range-picker" afterDrag=(action "getTimeRange")  day="monday" initFromValue="08:00" initToValue="18:00"}}
 
 {{outlet}}
+
+

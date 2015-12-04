@@ -25,14 +25,25 @@ $red:#DB2828;
 		cursor: pointer;
 		top: -14px;
 		z-index: 2;
+		transition: 0.2s background;
 
 		&.from {
 
 			background: transparentize(green, 0.5);
 			border: 2px solid green;
 
+			&.dragging {
+				background: transparentize(green, 0);
+			}
+
 			&:hover {
 				z-index: 3;
+			}
+		}
+
+		&.to {
+			&.dragging {
+				background: transparentize($red, 0);
 			}
 		}
 	}

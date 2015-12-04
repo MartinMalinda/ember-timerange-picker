@@ -22,6 +22,8 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	containerClass: 'tp-container',
 
+	shouldUpdateDistance: false,
+
 	stepper: computed('width', 'interval', function(){
 		return this.get('width')*this.get('interval')/(60*24);
 	}),
@@ -42,6 +44,10 @@ export default Ember.Component.extend(ResizeMixin, {
 	}),
 	fromOffsetXStepped: computed('fromOffsetX','stepper', function(){
 		return Math.round(this.get('fromOffsetX')/this.get('stepper'))*this.get('stepper');
+	}),
+
+	markerDistance: computed(function(){
+		return Math.abs(this.get('toOffsetXStepped') -this.get('fromOffsetXStepped'));
 	}),
 
 
@@ -125,9 +131,18 @@ export default Ember.Component.extend(ResizeMixin, {
 					this.set(nowDragging+'OffsetX', relativeX);
 
 					if(event.ctrlKey){
-						let distance = this.get(otherMarker+'OffsetX') - relativeX;
-						this.set(otherMarker+'OffsetX', relativeX + 400);
+						if(this.get('shouldUpdateDistance')){
 
+							this.notifyPropertyChange('markerDistance');
+							this.set('shouldUpdateDistance', false);
+
+						}
+						let distance = this.get('markerDistance');
+
+						this.set(otherMarker+'OffsetX', relativeX + distance);
+
+					} else {
+						this.set('shouldUpdateDistance', true);
 					}
 				}
 

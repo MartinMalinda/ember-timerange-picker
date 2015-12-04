@@ -20,6 +20,8 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	nowDragging: null,
 
+	containerClass: 'tp-container',
+
 	stepper: computed('width', 'interval', function(){
 		return this.get('width')*this.get('interval')/(60*24);
 	}),
@@ -27,22 +29,19 @@ export default Ember.Component.extend(ResizeMixin, {
 	fromValue: computed('width','fromOffsetXStepped', function(){
 		var totalminutes = Math.round((this.get('fromOffsetXStepped'))/this.get('width')*60*24);
 		return this.convertMinutesToTime(totalminutes);
-		// return totalminutes;
 	}),
+
 	toValue: computed('width','toOffsetXStepped', function(){
 		var totalminutes = Math.round((this.get('toOffsetXStepped'))/this.get('width')*60*24);
-		// return totalminutes;
 		return this.convertMinutesToTime(totalminutes);
 
 	}),
 
 	toOffsetXStepped: computed('toOffsetX','stepper', function(){
 		return Math.round(this.get('toOffsetX')/this.get('stepper'))*this.get('stepper');
-		// return this.get('toOffsetX');
 	}),
 	fromOffsetXStepped: computed('fromOffsetX','stepper', function(){
 		return Math.round(this.get('fromOffsetX')/this.get('stepper'))*this.get('stepper');
-		// return this.get('fromOffsetX');
 	}),
 
 
@@ -67,9 +66,12 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	analyzeDOM(){
 		Ember.run.schedule('afterRender', () => {
-			// GET the wrapper here
-			this.set('width', this.$().width());
-			this.set('positionLeft',this.$().offset().left);
+			
+			let containerEl = this.$().find('.' + this.get('containerClass'));
+			console.log(containerEl);
+
+			this.set('width', containerEl.width());
+			this.set('positionLeft',containerEl.offset().left);
 			
 		});
 
@@ -108,7 +110,7 @@ export default Ember.Component.extend(ResizeMixin, {
 			this.set(nowDragging+'OffsetX', relativeX);
 		}
 	},
-	
+
 	mouseUp(){
 
 		this.attrs.afterDrag(this.get('day'),'Start',this.get('fromValue'));

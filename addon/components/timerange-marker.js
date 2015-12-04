@@ -1,15 +1,19 @@
 import Ember from 'ember';
 
+const { computed } = Ember;
+
 export default Ember.Component.extend({
+
 	classNameBindings: ['type','dragging:dragging'],
 	classNames: ['marker'],
 	attributeBindings: ['style','draggable'],
+
 	draggable:false,
 	dragging: false,
 	offsetX: 0,
 	markerWidth: 28,
 
-	style: Ember.computed('offsetX', function(){
+	style: computed('offsetX', function(){
 		// if(this.get('dragging')){
 			return Ember.String.htmlSafe(`transform:translateX(${this.get('offsetX') - this.get('markerWidth')/2}px) `);
 		// }

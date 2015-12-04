@@ -96,8 +96,10 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	stopTheDragging(){
 
-		this.attrs.afterDrag(this.get('day'),'Start',this.get('fromValue'));
-		this.attrs.afterDrag(this.get('day'),'End',this.get('toValue'));
+		if(this.attrs.afterDrag){
+			this.attrs.afterDrag(this.get('day'),'Start',this.get('fromValue'));
+			this.attrs.afterDrag(this.get('day'),'End',this.get('toValue'));
+		}
 		this.set('nowDragging', false);
 		this.set('toDragging', false);
 		this.set('fromDragging', false);
@@ -156,6 +158,8 @@ export default Ember.Component.extend(ResizeMixin, {
 
 
 	mouseMove(event){
+
+		console.log('mouseMove');
 
 		let nowDragging = this.get('nowDragging');
 

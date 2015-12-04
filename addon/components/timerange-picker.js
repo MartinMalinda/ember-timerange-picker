@@ -109,16 +109,32 @@ export default Ember.Component.extend(ResizeMixin, {
 			let relativeX = event.clientX - this.get('positionLeft');
 			let isWithinRange = relativeX > 0 && relativeX < this.get('width');
 			let isChronological = false;
+			let otherMarker = null;
 
 			if(nowDragging === 'from'){
 				isChronological = relativeX < this.get('toOffsetX');
+				otherMarker = 'to';
 			} else {
 				isChronological = relativeX > this.get('fromOffsetX');
+				otherMarker = 'from';
 			} 
 			
-			if(isWithinRange && isChronological){
-				this.set(nowDragging+'OffsetX', relativeX);
+			if(isChronological){
+
+				if(isWithinRange){
+					this.set(nowDragging+'OffsetX', relativeX);
+
+					if(event.ctrlKey){
+						let distance = this.get(otherMarker+'OffsetX') - relativeX;
+						this.set(otherMarker+'OffsetX', relativeX + 400);
+
+					}
+				}
+
+			} else {
+				this.set(nowDragging+'OffsetX', this.get(otherMarker+'OffsetX'));
 			}
+
 		}
 	},
 

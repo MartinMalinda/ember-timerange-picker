@@ -21,6 +21,7 @@ export default Ember.Component.extend({
 
 	mouseDown(event){
 		if(event.button === 0){
+			console.log(event.ctrlKey);
 			this.set('dragging', true);
 			this.attrs.startDragging(this.get('type'));
 		}	
@@ -28,12 +29,12 @@ export default Ember.Component.extend({
 	
 
 	mouseLeave(event){
-		this.set('dragging', false);
+		// this.set('dragging', false);
 	},
 
 	mouseUp(event){
 		if(event.button === 0){
-			this.set('dragging', false);
+			// this.set('dragging', false);
 		}
 	}
 });

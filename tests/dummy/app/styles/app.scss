@@ -24,10 +24,16 @@ $red:#DB2828;
 		border-radius:50%;
 		cursor: pointer;
 		top: -14px;
+		z-index: 2;
 
 		&.from {
+
 			background: transparentize(green, 0.5);
 			border: 2px solid green;
+
+			&:hover {
+				z-index: 3;
+			}
 		}
 	}
 

@@ -14,27 +14,13 @@ export default Ember.Component.extend({
 	markerWidth: 28,
 
 	style: computed('offsetX', function(){
-		// if(this.get('dragging')){
 			return Ember.String.htmlSafe(`transform:translateX(${this.get('offsetX') - this.get('markerWidth')/2}px) `);
-		// }
 	}),
 
 	mouseDown(event){
 		if(event.button === 0){
-			console.log(event.ctrlKey);
 			this.set('dragging', true);
 			this.attrs.startDragging(this.get('type'));
 		}	
-	},
-	
-
-	mouseLeave(event){
-		// this.set('dragging', false);
-	},
-
-	mouseUp(event){
-		if(event.button === 0){
-			// this.set('dragging', false);
-		}
 	}
 });

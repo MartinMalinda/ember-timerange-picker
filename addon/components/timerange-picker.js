@@ -82,18 +82,6 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	},
 
-	initAnalyzeDOM: on('didInsertElement', function(){
-		this.analyzeDOM();
-		this.initialMarkerPlacement();
-	}),
-
-	reAanalyzeDOM: on('resize', function(){
-		console.log('resizing');
-		this.analyzeDOM();
-		this.initialMarkerPlacement();
-		
-	}),
-
 	initialMarkerPlacement(){
 		Ember.run.schedule('afterRender', () => {
 			var fromMinutes = this.convertTimeToMinutes(this.get('initFromValue'));
@@ -106,6 +94,67 @@ export default Ember.Component.extend(ResizeMixin, {
 						
 	},
 
+	stopTheDragging(){
+
+		this.attrs.afterDrag(this.get('day'),'Start',this.get('fromValue'));
+		this.attrs.afterDrag(this.get('day'),'End',this.get('toValue'));
+		this.set('nowDragging', false);
+		this.set('toDragging', false);
+		this.set('fromDragging', false);
+
+	},
+
+	initAnalyzeDOM: on('didInsertElement', function(){
+		this.analyzeDOM();
+		this.initialMarkerPlacement();
+	}),
+
+	reAanalyzeDOM: on('resize', function(){
+		this.analyzeDOM();
+		this.initialMarkerPlacement();
+		this.notifyPropertyChange('markerDistance');
+		
+	}),
+
+	moveSynchronously(relativeX, nowDragging, otherMarker){
+
+		if(this.get('shouldUpdateDistance')){
+
+			this.notifyPropertyChange('markerDistance');
+			this.set('shouldUpdateDistance', false);
+		}
+
+		let distance = this.get('markerDistance');
+		let offsetX2 = 0;
+
+		if(otherMarker === 'to'){
+			offsetX2 = relativeX + distance;
+		} else {
+			offsetX2 = relativeX - distance;
+		}
+
+		let hitMax = offsetX2 > this.get('width');
+		let hitMin = offsetX2 < 0;
+		let isWithinRange = !hitMax && !hitMin;
+
+		if(isWithinRange){
+			this.set(nowDragging+'OffsetX', relativeX);
+			this.set(otherMarker+'OffsetX', offsetX2);
+			this.set(otherMarker+'Dragging', true);
+
+		} else {
+
+			if(hitMax){
+				this.set(otherMarker+'OffsetX', this.get('width'));
+			}
+
+			if(hitMin){
+				this.set(otherMarker+'OffsetX',0);
+			}
+		}
+	},
+
+
 	mouseMove(event){
 
 		let nowDragging = this.get('nowDragging');
@@ -113,7 +162,9 @@ export default Ember.Component.extend(ResizeMixin, {
 		if(nowDragging){
 
 			let relativeX = event.clientX - this.get('positionLeft');
-			let isWithinRange = relativeX > 0 && relativeX < this.get('width');
+			let hitMax = relativeX > this.get('width');
+			let hitMin = relativeX < 0;
+			let isWithinRange = !hitMax && !hitMin;
 			let isChronological = false;
 			let otherMarker = null;
 
@@ -128,20 +179,14 @@ export default Ember.Component.extend(ResizeMixin, {
 			if(isChronological){
 
 				if(isWithinRange){
-					this.set(nowDragging+'OffsetX', relativeX);
+
 
 					if(event.ctrlKey){
-						if(this.get('shouldUpdateDistance')){
-
-							this.notifyPropertyChange('markerDistance');
-							this.set('shouldUpdateDistance', false);
-
-						}
-						let distance = this.get('markerDistance');
-
-						this.set(otherMarker+'OffsetX', relativeX + distance);
+						
+						this.moveSynchronously(relativeX, nowDragging, otherMarker);						
 
 					} else {
+						this.set(nowDragging+'OffsetX', relativeX);
 						this.set('shouldUpdateDistance', true);
 					}
 				}
@@ -155,16 +200,12 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	mouseUp(){
 
-		this.attrs.afterDrag(this.get('day'),'Start',this.get('fromValue'));
-		this.attrs.afterDrag(this.get('day'),'End',this.get('toValue'));
-		this.set('nowDragging', false);
+		this.stopTheDragging();
 	},
 
 	mouseLeave(){
 
-		this.attrs.afterDrag(this.get('day'),'Start',this.get('fromValue'));
-		this.attrs.afterDrag(this.get('day'),'End',this.get('toValue'));
-		this.set('nowDragging', false);
+		this.stopTheDragging();
 	},
 
 

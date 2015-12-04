@@ -1,20 +1,26 @@
-<div class="tp-container">{{fromValue}} - {{toValue}}
-		<div class="line"></div>
-		{{#timerange-marker 
-			offsetX=fromOffsetXStepped type="start" 
-			type="from"
-			positionLeft=positionLeft
-			startDragging=(action "startDragging") 
-			endDragging=(action "endDragging")
-		}}
-		{{/timerange-marker}}
-		
-		{{#timerange-marker 
-			offsetX=toOffsetXStepped type="end" 
-			type="to"
-			positionLeft=positionLeft
-			startDragging=(action "startDragging") 
-			endDragging=(action "endDragging")
+<div class="tp-container">
+	{{fromValue}} - {{toValue}}
+	<div class="line"></div>
+
+	{{timerange-marker 
+		offsetX=fromOffsetXStepped
+		type="from"
+		positionLeft=positionLeft
+		dragging=fromDragging
+
+		startDragging=(action "startDragging") 
+		endDragging=(action "endDragging")
+	}}
 	
-		}}
-		{{/timerange-marker}}</div>
+	{{timerange-marker 
+		offsetX=toOffsetXStepped
+		type="to"
+		positionLeft=positionLeft
+		dragging=toDragging
+
+
+		startDragging=(action "startDragging") 
+		endDragging=(action "endDragging")
+
+	}}
+</div>

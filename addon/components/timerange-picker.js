@@ -160,7 +160,6 @@ export default Ember.Component.extend(ResizeMixin, {
 	mouseMove(event){
 
 		console.log('mouseMove');
-
 		let nowDragging = this.get('nowDragging');
 
 		if(nowDragging){

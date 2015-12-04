@@ -17,7 +17,9 @@ export default Ember.Component.extend({
 			return Ember.String.htmlSafe(`transform:translateX(${this.get('offsetX') - this.get('markerWidth')/2}px) `);
 	}),
 
-	mouseDown(){
+	mouseDown(event){
+		console.log('mouseDown');
+		console.log(event);
 		this.set('dragging', true);
 		this.attrs.startDragging(this.get('type'));
 	}

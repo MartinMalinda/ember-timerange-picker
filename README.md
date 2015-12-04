@@ -6,6 +6,7 @@ ToDO
 
  - [x] require chronology
  - [x] implement container to provide whitespace
+ - [x] sync marker movement on ctrlKey
  - [ ] interval set by a param
  - [ ] get marker width on didInsertElement
  - [ ] write tests

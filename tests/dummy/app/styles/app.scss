@@ -19,10 +19,16 @@ $red:#DB2828;
 		position: absolute;
 		width: 28px;
 		height: 28px;
-		background: red;
+		background: transparentize($red, 0.5);
+		border: 2px solid $red;
 		border-radius:50%;
 		cursor: pointer;
 		top: -14px;
+
+		&.from {
+			background: transparentize(green, 0.5);
+			border: 2px solid green;
+		}
 	}
 
 	.icon {

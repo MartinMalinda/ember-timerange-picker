@@ -68,7 +68,6 @@ export default Ember.Component.extend(ResizeMixin, {
 		Ember.run.schedule('afterRender', () => {
 			
 			let containerEl = this.$().find('.' + this.get('containerClass'));
-			console.log(containerEl);
 
 			this.set('width', containerEl.width());
 			this.set('positionLeft',containerEl.offset().left);
@@ -102,12 +101,24 @@ export default Ember.Component.extend(ResizeMixin, {
 	},
 
 	mouseMove(event){
-		var nowDragging = this.get('nowDragging');
 
-		var relativeX = event.clientX - this.get('positionLeft');
+		let nowDragging = this.get('nowDragging');
 
-		if(nowDragging && relativeX > 0 && relativeX < this.get('width')){
-			this.set(nowDragging+'OffsetX', relativeX);
+		if(nowDragging){
+
+			let relativeX = event.clientX - this.get('positionLeft');
+			let isWithinRange = relativeX > 0 && relativeX < this.get('width');
+			let isChronological = false;
+
+			if(nowDragging === 'from'){
+				isChronological = relativeX < this.get('toOffsetX');
+			} else {
+				isChronological = relativeX > this.get('fromOffsetX');
+			} 
+			
+			if(isWithinRange && isChronological){
+				this.set(nowDragging+'OffsetX', relativeX);
+			}
 		}
 	},
 

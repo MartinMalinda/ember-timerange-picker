@@ -197,7 +197,9 @@ export default Ember.Component.extend(ResizeMixin, {
 				}
 
 			} else {
-				this.set(nowDragging+'OffsetX', this.get(otherMarker+'OffsetX') + correction);
+				if(!event.ctrlKey){
+					this.set(nowDragging+'OffsetX', this.get(otherMarker+'OffsetX') + correction);
+				}
 			}
 
 		}

@@ -87,7 +87,6 @@ export default Ember.Component.extend(ResizeMixin, {
 			var fromMinutes = this.convertTimeToMinutes(this.get('initFromValue'));
 			var toMinutes = this.convertTimeToMinutes(this.get('initToValue'));
 
-			console.log(fromMinutes,this.get('width'));
 			this.set('fromOffsetX',fromMinutes/(60*24)*this.get('width'));
 			this.set('toOffsetX',toMinutes/(60*24)*this.get('width'));
 		});
@@ -119,6 +118,7 @@ export default Ember.Component.extend(ResizeMixin, {
 	}),
 
 	moveSynchronously(relativeX, nowDragging, otherMarker){
+
 
 		if(this.get('shouldUpdateDistance')){
 
@@ -159,7 +159,6 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	mouseMove(event){
 
-		console.log('mouseMove');
 		let nowDragging = this.get('nowDragging');
 
 		if(nowDragging){
@@ -170,13 +169,16 @@ export default Ember.Component.extend(ResizeMixin, {
 			let isWithinRange = !hitMax && !hitMin;
 			let isChronological = false;
 			let otherMarker = null;
+			var correction = 0;
 
 			if(nowDragging === 'from'){
-				isChronological = relativeX < this.get('toOffsetX');
+				isChronological = relativeX + this.get('stepper') < this.get('toOffsetX');
 				otherMarker = 'to';
+				correction = - this.get('stepper');
 			} else {
-				isChronological = relativeX > this.get('fromOffsetX');
+				isChronological = relativeX - this.get('stepper') > this.get('fromOffsetX');
 				otherMarker = 'from';
+				correction = this.get('stepper');
 			} 
 			
 			if(isChronological){
@@ -195,7 +197,7 @@ export default Ember.Component.extend(ResizeMixin, {
 				}
 
 			} else {
-				this.set(nowDragging+'OffsetX', this.get(otherMarker+'OffsetX'));
+				this.set(nowDragging+'OffsetX', this.get(otherMarker+'OffsetX') + correction);
 			}
 
 		}

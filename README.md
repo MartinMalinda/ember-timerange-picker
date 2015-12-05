@@ -16,3 +16,4 @@ ToDO
  - [ ] render into SVG (optionally?)
  - [ ] settable minDuration
  - [ ] settable maxDuration
+ - [ ] update chronology check when ctrlKey is pressed

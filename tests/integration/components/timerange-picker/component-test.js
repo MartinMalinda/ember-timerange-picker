@@ -30,7 +30,7 @@ var markerStruct = function($marker, location, $container, width){
   }
 
   this.getOffset = function(){
-    return this.$m.offset().left;
+    return Math.round(this.$m.offset().left);
   }
 
   this.moveRel = function(x){
@@ -136,13 +136,15 @@ test('marker has dragging class during dragging', function(assert) {
   Ember.run(() => marker.$container.trigger('mouseup'));
   assert.ok(!marker.$m.hasClass('dragging'), 'Marker has not dragging class after mouseup');
   Ember.run(() => marker.$m.trigger('mousedown'));
-  assert.ok(marker.$m.hasClass('dragging'), 'Marker has class dragging again');
+  assert.ok(marker.$m.hasClass('dragging'), 'Marker has class dragging again after mousedown');
   Ember.run(() => marker.$container.trigger('mouseleave'));
   assert.ok(!marker.$m.hasClass('dragging'), 'Marker has not dragging class after mouseleave');
 });
 
-test('marker moves when dragged', function(assert){
-  assert.expect(7);
+test('marker moves properly when dragged', function(assert){
+  assert.expect(10);
+
+  var interval = 15;
 
   this.render(hbs`
     {{timerange-picker class="time-range-picker" initFromValue="0:00" initToValue="24:00"}} 
@@ -153,6 +155,7 @@ test('marker moves when dragged', function(assert){
   var $container = leftMarker.$container;
 
   var maxX = $container.width();
+  var stepper = Math.round($container.width()*interval/(60*24));
 
   var offsetBefore = leftMarker.getOffset();
   leftMarker.moveRel(120);
@@ -164,12 +167,13 @@ test('marker moves when dragged', function(assert){
 
   leftMarker.moveAbs(0.5);
   rightMarker.moveAbs(0.4);
-  assert.equal(leftMarker.getOffset(), rightMarker.getOffset(), 'Markers collide at the same spot when being dragged over themselves');
+
+  assert.equal(leftMarker.getOffset() + stepper, rightMarker.getOffset(), 'Markers collide at minimal distance when being dragged over themselves');
 
 
   Ember.run(() => $(window).resize());
   assert.equal(leftMarker.getX(), 0, 'Left Marker is reset to initial position after window resize');
-  assert.equal(rightMarker.getX(), maxX, 'Left Marker is reset to initial position window resize');
+  assert.equal(rightMarker.getX(), maxX, 'Right Marker is reset to initial position window resize');
 
   leftMarker.moveAbs(0.4);
   rightMarker.moveAbs(0.6);
@@ -188,15 +192,19 @@ test('marker moves when dragged', function(assert){
   leftMarker.ctrlKey = true;
   leftMarker.moveAbs(0.7);
 
-  assert.equal(rightMarker.getX(), maxX, 'If ctrl is pressed and markers move synchronously to the right, right one should stop at the right');
+  assert.equal(rightMarker.getX(), maxX, 'If ctrl is pressed and markers move synchronously to the right, right one should get out of range');
 
   leftMarker.ctrlKey = false;
   leftMarker.moveAbs(0.2);
   rightMarker.moveAbs(0.6);
+  distanceBefore = getDistance(leftMarker, rightMarker);
   rightMarker.ctrlKey = true;
   rightMarker.smoothDrag(0.1);
+  distanceAfter = getDistance(leftMarker,rightMarker);
 
-  assert.equal(leftMarker.getX(), 0, 'If ctrl is pressed and markers move synchronously to the left, left one should stop at the left');
+  assert.equal(leftMarker.getX(), 0, 'If ctrl is pressed and markers move synchronously to the left, left one should not get out of range');
+  assert.equal(distanceBefore, distanceAfter, 'If ctrl is pressed, distance should stay the same even when getting out of range');
+
 
 
 

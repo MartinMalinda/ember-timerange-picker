@@ -10,80 +10,100 @@ moduleForComponent('timerange-picker', 'Integration | Component | timerange pick
 
 var markerWidth = 28;
 
-function dragMarkerRel(x, marker,container, ctrlKey = false){
 
-  Ember.run(() => {
+var markerStruct = function($marker, location, $container, width){
 
-    var mousemove = $.Event('mousemove');
-    var offsetLeft = marker.offset().left;
-    var offsetTop = marker.offset().top;
+  this.$m = $marker;
+  this.location = location;
+  this.$container = $container;
+  this.width = width;
 
-    $.extend(mousemove, {
-        clientX: offsetLeft + x,
-        clientY: offsetTop,
-        ctrlKey: ctrlKey
-    });
+  this.ctrlKey = false;
+  this.mousemove = $.Event('mousemove');
 
-    marker.trigger('mousedown');
-    container.trigger(mousemove);
-    container.trigger('mouseup');
-    
-  });
-}
+  this.offsetTop = this.$m.offset().top;
 
-function dragMarkerAbs(percentageX, marker,container, ctrlKey = false){
+  this.previousOffset = 0;
 
-  Ember.run(() => {
+  this.getX = function(){
+    return this.$m.offset().left - this.$container.offset().left + this.width/2;
+  }
 
-    var mousemove = $.Event('mousemove');
-    var containerOffsetLeft = container.offset().left;
-    // var markerOffsetLeft = marker.offset().left;
-    var offsetTop = marker.offset().top;
+  this.getOffset = function(){
+    return this.$m.offset().left;
+  }
 
-    $.extend(mousemove, {
-        clientX: containerOffsetLeft + percentageX * container.width(),
-        clientY: offsetTop,
-        ctrlKey: ctrlKey
-    });
+  this.moveRel = function(x){
 
-    marker.trigger('mousedown');
-    container.trigger(mousemove);
-    container.trigger('mouseup');
-    
-  });
-}
+    this.previousOffset = this.getOffset();
 
-function continuousDragAbs(percentageX, marker,container, ctrlKey = false){
     Ember.run(() => {
 
-    var mousemove = $.Event('mousemove');
-    var containerOffsetLeft = container.offset().left;
-    // var markerOffsetLeft = marker.offset().left;
-    var offsetTop = marker.offset().top;
-    var iterateTo = percentageX * container.width();
-
-    marker.trigger('mousedown');
-
-    function move(){
-       $.extend(mousemove, {
-          clientX: containerOffsetLeft + i,
-          clientY: offsetTop,
-          ctrlKey: ctrlKey
+      $.extend(this.mousemove, {
+        clientX: this.getOffset() + x,
+        clientY: this.offsetTop,
+        ctrlKey: this.ctrlKey
       });
 
-      container.trigger(mousemove);
+      this.drag();
+
+    });
+  }
+
+  this.moveAbs = function(percentageX){
+    var containerOffsetLeft = this.$container.offset().left;
+    var containerWidth = this.$container.width();
+
+    Ember.run(() => {
+      $.extend(this.mousemove, {
+        clientX: containerOffsetLeft + percentageX * this.$container.width(),
+        clientY: this.offsetTop,
+        ctrlKey: this.ctrlKey
+      });
+
+      this.drag();
+    });
+  }
+
+  this.smoothDrag = function(percentageX){
+
+    var currentPercentage = Math.round(this.getX()/this.$container.width()*100);
+    var leftDirection = percentageX < currentPercentage;
+
+    var i = currentPercentage;
+    while( i !== percentageX * 100){
+      this.moveAbs(i/100);
+      if(leftDirection) {
+        i--;
+      } else {
+        i++;
+      }
     }
 
-    for (var i = containerOffsetLeft; i <= iterateTo; i++){
-
-     
+    if(i === percentageX * 100){
+      var destinationX = Math.round(percentageX * this.$container.width());
+      i = Math.round(this.getOffset());
+      while(i !== destinationX){
+        if(leftDirection){
+          this.moveRel(-1);
+          i--;
+        } else {
+          this.moveRel(1);
+          i++;
+        }
+      }
     }
-    container.trigger('mouseup');
-  });
+  }
+
+  this.drag = function(){
+    this.$m.trigger('mousedown');
+    this.$container.trigger(this.mousemove);
+    this.$container.trigger('mouseup');
+  }
 }
 
 function getDistance (marker1, marker2){
-  return Math.round(Math.abs(marker1.offset().left - marker2.offset().left));
+  return Math.round(Math.abs(marker1.getOffset() - marker2.getOffset()));
 }
 
 var ctrlKeydown = $.Event("keydown");
@@ -109,68 +129,75 @@ test('marker has dragging class during dragging', function(assert) {
     {{timerange-picker class="time-range-picker" initFromValue="8:00" initToValue="18:00"}} 
   `);
 
-  Ember.run(() => this.$('.marker:eq(0)').trigger('mousedown'));
-  assert.ok($('.marker:eq(0)').hasClass('dragging'), 'Marker has class dragging after mousedown');
-  Ember.run(() => this.$('.time-range-picker:eq(0)').trigger('mouseup'));
-  assert.ok(!$('.marker:eq(0)').hasClass('dragging'), 'Marker has not dragging class after mouseup');
-  Ember.run(() => this.$('.marker:eq(0)').trigger('mousedown'));
-  assert.ok($('.marker:eq(0)').hasClass('dragging'), 'Marker has class dragging again');
-  Ember.run(() => this.$('.time-range-picker:eq(0)').trigger('mouseleave'));
-  assert.ok(!$('.marker:eq(0)').hasClass('dragging'), 'Marker has not dragging class after mouseleave');
+  var marker = new markerStruct(this.$('.marker:eq(0)'), 'left', this.$('.time-range-picker:eq(0)'), 28);
+
+  Ember.run(() => marker.$m.trigger('mousedown'));
+  assert.ok(marker.$m.hasClass('dragging'), 'Marker has class dragging after mousedown');
+  Ember.run(() => marker.$container.trigger('mouseup'));
+  assert.ok(!marker.$m.hasClass('dragging'), 'Marker has not dragging class after mouseup');
+  Ember.run(() => marker.$m.trigger('mousedown'));
+  assert.ok(marker.$m.hasClass('dragging'), 'Marker has class dragging again');
+  Ember.run(() => marker.$container.trigger('mouseleave'));
+  assert.ok(!marker.$m.hasClass('dragging'), 'Marker has not dragging class after mouseleave');
 });
 
 test('marker moves when dragged', function(assert){
-  assert.expect(8);
+  assert.expect(7);
 
   this.render(hbs`
     {{timerange-picker class="time-range-picker" initFromValue="0:00" initToValue="24:00"}} 
   `);
 
-  var leftMarker = this.$('.marker:eq(0)');
-  var rightMarker = this.$('.marker:eq(1)');
-  var container = this.$('.tp-container:eq(0)');
-  var offsetLeft = container.offset().left;
-  var containerWidth = container.width();
-  var maxX = containerWidth + offsetLeft - markerWidth/2;
-  var minX = offsetLeft - markerWidth/2;
+  var leftMarker = new markerStruct(this.$('.marker:eq(0)'), 'left', this.$('.tp-container:eq(0)'), 28);
+  var rightMarker = new markerStruct(this.$('.marker:eq(1)'), 'right', this.$('.tp-container:eq(0)'), 28);
+  var $container = leftMarker.$container;
 
-  dragMarkerRel(120, leftMarker, container);
-  assert.equal(leftMarker.offset().left > offsetLeft + 50, true, 'leftMarker moves to the right when dragged');
+  var maxX = $container.width();
 
-  dragMarkerRel(-140, leftMarker, container);
-  assert.equal(leftMarker.offset().left >= offsetLeft, true, 'leftMarker stays at position 0 when dragged out of container area');
+  var offsetBefore = leftMarker.getOffset();
+  leftMarker.moveRel(120);
+  assert.ok(leftMarker.getOffset() > offsetBefore + 100, 'leftMarker moves to the right when dragged');
 
-  dragMarkerAbs(0.5, leftMarker, container);
-  dragMarkerAbs(0.4, rightMarker, container);
-  assert.equal(leftMarker.offset().left, rightMarker.offset().left, 'Markers collide at the same spot when being dragged over themselves');
+  leftMarker.moveRel(-240);
+  assert.ok(leftMarker.getOffset() === leftMarker.previousOffset, 'leftMarker stays at position 0 when dragged out of container area');
+
+
+  leftMarker.moveAbs(0.5);
+  rightMarker.moveAbs(0.4);
+  assert.equal(leftMarker.getOffset(), rightMarker.getOffset(), 'Markers collide at the same spot when being dragged over themselves');
+
 
   Ember.run(() => $(window).resize());
-  assert.equal(leftMarker.offset().left, minX, 'Left Marker is reset to initial position after window resize');
-  assert.equal(rightMarker.offset().left, maxX, 'Left Marker is reset to initial position window resize');
+  assert.equal(leftMarker.getX(), 0, 'Left Marker is reset to initial position after window resize');
+  assert.equal(rightMarker.getX(), maxX, 'Left Marker is reset to initial position window resize');
 
-  dragMarkerAbs(0.4, leftMarker, container);
-  dragMarkerAbs(0.6, rightMarker, container);
+  leftMarker.moveAbs(0.4);
+  rightMarker.moveAbs(0.6);
+  
   var distanceBefore = getDistance(leftMarker, rightMarker);
-
-  var offsetBefore = leftMarker.offset().left;
-  dragMarkerRel(containerWidth/5, leftMarker,container, true);
-  var offsetAfter = leftMarker.offset().left;
+  leftMarker.ctrlKey = true;
+  leftMarker.moveAbs(0.5);
   var distanceAfter = getDistance(leftMarker, rightMarker);
 
+  assert.notEqual(leftMarker.previousOffset, leftMarker.getOffset(), 'If ctrl is pressed, the markers actually moved during dragging');
   assert.equal(distanceBefore, distanceAfter, 'If ctrl is pressed, the distance stays the same during dragging');
-  assert.notEqual(offsetBefore, offsetAfter, 'If ctrl is pressed, the markers actually moved during dragging');
 
-  dragMarkerAbs(0.4, leftMarker, container);
-  dragMarkerAbs(0.8, rightMarker, container);
-  dragMarkerAbs(0.7, leftMarker,container, true);
+  leftMarker.ctrlKey = false;
+  leftMarker.moveAbs(0.4);
+  rightMarker.moveAbs(0.8);
+  leftMarker.ctrlKey = true;
+  leftMarker.moveAbs(0.7);
 
-  assert.equal(rightMarker.offset().left, maxX, 'If ctrl is pressed and markers move synchronously to the right, right one should stop at the right');
+  assert.equal(rightMarker.getX(), maxX, 'If ctrl is pressed and markers move synchronously to the right, right one should stop at the right');
 
-  dragMarkerAbs(0.2, leftMarker, container);
-  dragMarkerAbs(0.5, rightMarker, container);
-  continuousDragAbs(0.2,rightMarker,container, true);
+  leftMarker.ctrlKey = false;
+  leftMarker.moveAbs(0.2);
+  rightMarker.moveAbs(0.6);
+  rightMarker.ctrlKey = true;
+  rightMarker.smoothDrag(0.1);
 
-  assert.equal(leftMarker.offset().left, minX, 'If ctrl is pressed and markers move synchronously to the left, left one should stop at the left');
+  assert.equal(leftMarker.getX(), 0, 'If ctrl is pressed and markers move synchronously to the left, left one should stop at the left');
+
 
 
 });

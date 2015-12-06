@@ -8,7 +8,6 @@ moduleForComponent('timerange-picker', 'Integration | Component | timerange pick
 });
 
 
-var markerWidth = 28;
 
 
 var markerStruct = function($marker, location, $container, width){
@@ -27,15 +26,15 @@ var markerStruct = function($marker, location, $container, width){
 
   this.getX = function(){
     return Math.round(this.$m.offset().left - this.$container.offset().left + this.width/2);
-  }
+  };
 
   this.getP = function(){
     return this.getX()/this.$container.width();
-  }
+  };
 
   this.getOffset = function(){
     return Math.round(this.$m.offset().left);
-  }
+  };
 
   this.moveRel = function(x){
 
@@ -52,11 +51,11 @@ var markerStruct = function($marker, location, $container, width){
       this.drag();
 
     });
-  }
+  };
 
   this.moveAbs = function(percentageX){
+
     var containerOffsetLeft = this.$container.offset().left;
-    var containerWidth = this.$container.width();
 
     Ember.run(() => {
       $.extend(this.mousemove, {
@@ -67,7 +66,7 @@ var markerStruct = function($marker, location, $container, width){
 
       this.drag();
     });
-  }
+  };
 
   this.smoothDrag = function(percentageX){
 
@@ -97,22 +96,22 @@ var markerStruct = function($marker, location, $container, width){
         }
       }
     }
-  }
+  };
 
   this.drag = function(){
     this.$m.trigger('mousedown');
     this.$container.trigger(this.mousemove);
     this.$container.trigger('mouseup');
-  }
-}
+  };
+};
 
 function getDistance (leftMarker, rightMarker){
   return Math.round(Math.abs(rightMarker.getOffset() - leftMarker.getOffset()));
 }
 
-function makeStepped(x, stepper){
-  return Math.round(x/stepper)*stepper;
-}
+// function makeStepped(x, stepper){
+//   return Math.round(x/stepper)*stepper;
+// }
 
 var ctrlKeydown = $.Event("keydown");
 ctrlKeydown.which = 17;
@@ -224,16 +223,16 @@ test('marker moves properly when dragged', function(assert){
   distanceAfter = getDistance(leftMarker, rightMarker);
 
   // leftMarker.getX()
-  assert.equal(leftMarker.getX(), $container.width()*0.8 - stepper, 'If ctrl is pressed and the drag is really fast, markers should not collide');
+  assert.equal(leftMarker.getX(), $container.width()*0.8, 'If ctrl is pressed and the drag is really fast, markers should not collide');
   assert.equal(distanceBefore, distanceAfter, 'If ctrl is pressed and the drag is really fast, distance should stay the same');
 
 });
 
 test('setting minimum and maximum durations', function(assert){
-  assert.expect(1);
+  assert.expect(2);
 
-  var interval = 15;
   var minDuration = 60;
+  var maxDuration = 300;
 
   this.render(hbs`
     {{timerange-picker minDuration="60" maxDuration="300" class="time-range-picker" initFromValue="0:00" initToValue="24:00"}} 
@@ -250,5 +249,33 @@ test('setting minimum and maximum durations', function(assert){
 
   var actualDistance = getDistance(leftMarker, rightMarker);
   assert.equal(actualDistance, expectedDistance, 'Markers should stop at minimal distance if minDuration is set');
+
+  leftMarker.moveAbs(0);
+  rightMarker.moveAbs(1);
+  expectedDistance = Math.round(maxDuration * $container.width() / (60*24));
+  actualDistance = getDistance(leftMarker, rightMarker);
+  assert.equal(actualDistance, expectedDistance, 'Markers should stop at maximal distance if minDuration is set')
+
+});
+
+test('closure actions', function(assert){
+  assert.expect(2);
+
+  this.set('afterDrag', () => assert.ok(true, 'afterDrag action has been called after moving marker'));
+  this.set('onChange', () => assert.ok(true, 'onChange action has been called after to and from value changed'));
+
+  this.render(hbs`
+    {{timerange-picker afterDrag=(action afterDrag) class="time-range-picker" initFromValue="0:00" initToValue="24:00"}} 
+  `);
+
+  var leftMarker = new markerStruct(this.$('.marker:eq(0)'), 'left', this.$('.tp-container:eq(0)'), 28);
+  var rightMarker = new markerStruct(this.$('.marker:eq(1)'), 'right', this.$('.tp-container:eq(0)'), 28);
+  var $container = leftMarker.$container;
+
+  leftMarker.moveAbs(0.4); 
+  // afterDrag should be called now
+  // onChange should be called now
+
+
 
 });

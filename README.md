@@ -21,7 +21,11 @@ ToDO
   - [x] test resize functionality
   - [x] test ctrlKey dragging
   - [x] test dragging out of range
+  - [ ] test min and max duration
  - [ ] render into SVG (optionally?)
  - [x] settable minDuration
  - [ ] settable maxDuration
+  - [x] basic functionality
+  - [ ] sync dragging if limits are reached
+  - [ ] make sure X = limit if limit is reached
  - [ ] update chronology check when ctrlKey is pressed

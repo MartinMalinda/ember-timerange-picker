@@ -16,7 +16,7 @@ ToDO
  - [ ] minutes format
  - [ ] onChange function
  - [ ] write tests
-  - [ ] test the onChange and afterDrag function
+  - [x] test the onChange and afterDrag function
   - [ ] test the interval
   - [x] test resize functionality
   - [x] test ctrlKey dragging

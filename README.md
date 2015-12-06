@@ -14,7 +14,7 @@ ToDO
  - [x] set marker width on didInsertElement
  - [ ] AM/PM format
  - [ ] minutes format
- - [ ] onChange function
+ - [x] onChange function
  - [ ] write tests
   - [x] test the onChange and afterDrag function
   - [ ] test the interval

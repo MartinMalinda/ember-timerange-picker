@@ -26,7 +26,11 @@ var markerStruct = function($marker, location, $container, width){
   this.previousOffset = 0;
 
   this.getX = function(){
-    return this.$m.offset().left - this.$container.offset().left + this.width/2;
+    return Math.round(this.$m.offset().left - this.$container.offset().left + this.width/2);
+  }
+
+  this.getP = function(){
+    return this.getX()/this.$container.width();
   }
 
   this.getOffset = function(){
@@ -102,8 +106,12 @@ var markerStruct = function($marker, location, $container, width){
   }
 }
 
-function getDistance (marker1, marker2){
-  return Math.round(Math.abs(marker1.getOffset() - marker2.getOffset()));
+function getDistance (leftMarker, rightMarker){
+  return Math.round(Math.abs(rightMarker.getOffset() - leftMarker.getOffset()));
+}
+
+function makeStepped(x, stepper){
+  return Math.round(x/stepper)*stepper;
 }
 
 var ctrlKeydown = $.Event("keydown");
@@ -116,7 +124,7 @@ test('it renders', function(assert) {
     {{timerange-picker class="time-range-picker" containerClass="my-container" initFromValue="8:00" initToValue="18:00"}}
   `);
 
-  assert.equal(this.$().text().trim(), '8:00 - 18:00', 'Times are displayed');
+  assert.equal(this.$().text().trim(), '8:00 - 18:00 (10:00)', 'Times are displayed');
   assert.equal(this.$('.my-container').length, 1, 'There is 1 container present');
   assert.equal(this.$('.marker').length, 2, 'There are 2 markers present');
   assert.equal(this.$('.line').length, 1, 'There is 1 line present');
@@ -142,7 +150,7 @@ test('marker has dragging class during dragging', function(assert) {
 });
 
 test('marker moves properly when dragged', function(assert){
-  assert.expect(10);
+  assert.expect(12);
 
   var interval = 15;
 
@@ -206,6 +214,41 @@ test('marker moves properly when dragged', function(assert){
   assert.equal(distanceBefore, distanceAfter, 'If ctrl is pressed, distance should stay the same even when getting out of range');
 
 
+  leftMarker.ctrlKey = false;
+  rightMarker.ctrlKey = false;
+  rightMarker.moveAbs(0.58);
+  leftMarker.moveAbs(0.55);
+  distanceBefore = getDistance(leftMarker, rightMarker);
+  leftMarker.ctrlKey = true;
+  leftMarker.moveAbs(0.8);
+  distanceAfter = getDistance(leftMarker, rightMarker);
 
+  // leftMarker.getX()
+  assert.equal(leftMarker.getX(), $container.width()*0.8 - stepper, 'If ctrl is pressed and the drag is really fast, markers should not collide');
+  assert.equal(distanceBefore, distanceAfter, 'If ctrl is pressed and the drag is really fast, distance should stay the same');
+
+});
+
+test('setting minimum and maximum durations', function(assert){
+  assert.expect(1);
+
+  var interval = 15;
+  var minDuration = 60;
+
+  this.render(hbs`
+    {{timerange-picker minDuration="60" maxDuration="300" class="time-range-picker" initFromValue="0:00" initToValue="24:00"}} 
+  `);
+
+  var leftMarker = new markerStruct(this.$('.marker:eq(0)'), 'left', this.$('.tp-container:eq(0)'), 28);
+  var rightMarker = new markerStruct(this.$('.marker:eq(1)'), 'right', this.$('.tp-container:eq(0)'), 28);
+  var $container = leftMarker.$container;
+
+  var expectedDistance = Math.round(minDuration * $container.width() / (60*24));
+
+  leftMarker.moveAbs(0.5);
+  rightMarker.moveAbs(0.5);
+
+  var actualDistance = getDistance(leftMarker, rightMarker);
+  assert.equal(actualDistance, expectedDistance, 'Markers should stop at minimal distance if minDuration is set');
 
 });

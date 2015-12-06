@@ -1,6 +1,13 @@
 <h1 id="title">Ember timerange-picker</h1>
 {{!-- afterDrag=(action "updateOpeningHours" ) --}}
-{{timerange-picker class="time-range-picker" afterDrag=(action "getTimeRange")  day="monday" initFromValue="08:00" initToValue="18:00"}}
+{{timerange-picker
+	interval="15"
+	minDuration="60" 
+	class="time-range-picker"
+	afterDrag=(action "getTimeRange") 
+	initFromValue="00:00"
+	initToValue="24:00"
+}}
 
 {{outlet}}
 

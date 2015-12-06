@@ -18,19 +18,30 @@ export default Ember.Component.extend(ResizeMixin, {
 	width: 0,
 	markerWidth: 28,
 
-	nowDragging: null,
+	activeMarker: null,
 
 	containerClass: 'tp-container',
 
 	shouldUpdateDistance: false,
+
+	passiveMarker: computed('activeMarker', function(){
+		let draggedMarker = this.get('activeMarker');
+
+		if(draggedMarker === 'to') {
+			return 'from';
+		}
+		if(draggedMarker === 'from'){
+			return 'to';
+		}
+		return false;
+	}),
 
 	stepper: computed('width', 'interval', function(){
 		return this.get('width')*this.get('interval')/(60*24);
 	}),
 
 	fromMinutes: computed('width','fromOffsetXStepped', function(){
-		var totalminutes = Math.round((this.get('fromOffsetXStepped'))/this.get('width')*60*24);
-		return totalminutes;
+		return this.convertOffsetToMinutes(this.get('fromOffsetXStepped'));
 	}),
 
 	fromValue: computed('fromMinutes', function(){
@@ -38,8 +49,7 @@ export default Ember.Component.extend(ResizeMixin, {
 	}),
 
 	toMinutes: computed('width','toOffsetXStepped', function(){
-		var totalminutes = Math.round((this.get('toOffsetXStepped'))/this.get('width')*60*24);
-		return totalminutes;
+		return this.convertOffsetToMinutes(this.get('toOffsetXStepped'));
 	}),
 
 	toValue: computed('toMinutes', function(){
@@ -47,14 +57,14 @@ export default Ember.Component.extend(ResizeMixin, {
 	}),
 
 	toOffsetXStepped: computed('toOffsetX','stepper', function(){
-		return Math.round(this.get('toOffsetX')/this.get('stepper'))*this.get('stepper');
+		return this.makeStepped(this.get('toOffsetX'));
 	}),
 	fromOffsetXStepped: computed('fromOffsetX','stepper', function(){
-		return Math.round(this.get('fromOffsetX')/this.get('stepper'))*this.get('stepper');
+		return this.makeStepped(this.get('fromOffsetX'));
 	}),
 
 	markerDistance: computed(function(){
-		return Math.abs(this.get('toOffsetXStepped') -this.get('fromOffsetXStepped'));
+		return Math.abs(this.get('toOffsetXStepped') - this.get('fromOffsetXStepped'));
 	}),
 
 	pickedDuration: computed('fromMinutes','toMinutes', function(){
@@ -67,12 +77,19 @@ export default Ember.Component.extend(ResizeMixin, {
 	}),
 
 	minDistance: computed('minDuration','width', function(){
-		// console.log( this.get('minDuration') * this.get('width'));
-		return this.get('minDuration') * this.get('width')/(60*24);
+		return this.convertMinutesToOffset(this.get('minDuration'));
 	}),
 
+	convertMinutesToOffset(minutes){
+		return Math.round(minutes * this.get('width') / (60*24));
+	},
+
+	convertOffsetToMinutes(offset){
+		return Math.round(offset / this.get('width')*60*24);
+	},
 
 	convertTimeToMinutes(timeString){
+
 		var minutes = parseInt(timeString.split(":")[1]);
 		var hours = parseInt(timeString.split(":")[0]);
 
@@ -89,6 +106,10 @@ export default Ember.Component.extend(ResizeMixin, {
 			minutes = "00";
 		}
 		return `${hours}:${minutes}`;
+	},
+
+	makeStepped(value){
+		return Math.round(value / this.get('stepper')) * this.get('stepper');
 	},
 
 	analyzeDOM(){
@@ -117,10 +138,9 @@ export default Ember.Component.extend(ResizeMixin, {
 	stopTheDragging(){
 
 		if(this.attrs.afterDrag){
-			this.attrs.afterDrag(this.get('day'),'Start',this.get('fromValue'));
-			this.attrs.afterDrag(this.get('day'),'End',this.get('toValue'));
+			this.attrs.afterDrag(this.get('fromValue'), this.get('toValue'));
 		}
-		this.set('nowDragging', false);
+		this.set('activeMarker', false);
 		this.set('toDragging', false);
 		this.set('fromDragging', false);
 
@@ -138,8 +158,9 @@ export default Ember.Component.extend(ResizeMixin, {
 		
 	}),
 
-	moveSynchronously(relativeX, nowDragging, otherMarker){
+	moveSynchronously(relativeX, activeMarker){
 
+		let passiveMarker = this.get('passiveMarker');
 
 		if(this.get('shouldUpdateDistance')){
 
@@ -150,7 +171,7 @@ export default Ember.Component.extend(ResizeMixin, {
 		let distance = this.get('markerDistance');
 		let offsetX2 = 0;
 
-		if(otherMarker === 'to'){
+		if(passiveMarker === 'to'){
 			offsetX2 = relativeX + distance;
 		} else {
 			offsetX2 = relativeX - distance;
@@ -161,18 +182,19 @@ export default Ember.Component.extend(ResizeMixin, {
 		let isWithinRange = !hitMax && !hitMin;
 
 		if(isWithinRange){
-			this.set(nowDragging+'OffsetX', relativeX);
-			this.set(otherMarker+'OffsetX', offsetX2);
-			this.set(otherMarker+'Dragging', true);
+
+			this.set(activeMarker+'OffsetX', relativeX);
+			this.set(passiveMarker+'OffsetX', offsetX2);
+			this.set(passiveMarker+'Dragging', true);
 
 		} else {
 
 			if(hitMax){
-				this.set(otherMarker+'OffsetX', this.get('width'));
+				this.set(passiveMarker+'OffsetX', this.get('width'));
 			}
 
 			if(hitMin){
-				this.set(otherMarker+'OffsetX',0);
+				this.set(passiveMarker+'OffsetX',0);
 			}
 		}
 	},
@@ -180,74 +202,68 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	mouseMove(event){
 
-		let nowDragging = this.get('nowDragging');
+		let activeMarker = this.get('activeMarker');
 
-		if(nowDragging){
+		if(activeMarker){
 
 			let relativeX = event.clientX - this.get('positionLeft');
-			let hitMax = relativeX > this.get('width');
-			let hitMin = relativeX < 0;
-			let isWithinRange = !hitMax && !hitMin;
+
+			let overMax = relativeX > this.get('width');
+			let overMin = relativeX < 0;
+
+			let isWithinRange = !overMax && !overMin;
 			let isChronological = false;
-			let otherMarker = null;
+			let passiveMarker = this.get('passiveMarker');
 			var correction = 0;
 
-			if(nowDragging === 'from'){
+			if(activeMarker === 'from'){
 				isChronological = relativeX + this.get('minDistance') < this.get('toOffsetX');
-				otherMarker = 'to';
-				correction = - this.get('minDistance');
+				correction = this.get('minDistance')*(-1);
 			} else {
 				isChronological = relativeX - this.get('minDistance') > this.get('fromOffsetX');
-				otherMarker = 'from';
 				correction = this.get('minDistance');
 			} 
+
+			if(isWithinRange && event.ctrlKey){
+				this.moveSynchronously(relativeX, activeMarker);
+
+			} else if (isWithinRange){
+
+				if(isChronological){
+
+					this.set(activeMarker+'OffsetX', relativeX);
+					this.set('shouldUpdateDistance', true);
+
+				} else {
+
+					this.set(activeMarker+'OffsetX', this.get(passiveMarker+'OffsetX') + correction);
+					
+				}
+			} 
 			
-			if(isChronological || event.ctrlKey){
-
-				if(isWithinRange){
-
-
-					if(event.ctrlKey){
-						
-						this.moveSynchronously(relativeX, nowDragging, otherMarker);						
-
-					} else {
-						this.set(nowDragging+'OffsetX', relativeX);
-						this.set('shouldUpdateDistance', true);
-					}
-				}
-
-			} else {
-				if(!event.ctrlKey){
-					this.set(nowDragging+'OffsetX', this.get(otherMarker+'OffsetX') + correction);
-				}
-			}
 
 		}
 	},
 
 	mouseUp(){
-
 		this.stopTheDragging();
 	},
 
 	mouseLeave(){
-
 		this.stopTheDragging();
 	},
 
 
 
 	actions: {
-
 		startDragging(type){
 			this.set(type+'Dragging',true);
-			this.set('nowDragging',type);
+			this.set('activeMarker',type);
 		},
 
 		endDragging(type){
 			this.set(type+'Dragging',false);
-			this.set('nowDragging',false);
+			this.set('activeMarker',false);
 
 		}
 	}

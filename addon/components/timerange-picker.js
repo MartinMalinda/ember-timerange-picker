@@ -63,6 +63,14 @@ export default Ember.Component.extend(ResizeMixin, {
 		return this.makeStepped(this.get('fromOffsetX'));
 	}),
 
+	currentMax: computed('maxDistance','fromOffsetXStepped', function(){
+		return this.get('maxDistance') + this.get('fromOffsetXStepped');
+	}),
+
+	currentMin: computed('maxDistance', 'toOffsetXStepped', function(){
+		return this.get('toOffsetXStepped') - this.get('maxDistance');
+	}),
+
 	markerDistance: computed(function(){
 		return Math.abs(this.get('toOffsetXStepped') - this.get('fromOffsetXStepped'));
 	}),
@@ -78,6 +86,10 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	minDistance: computed('minDuration','width', function(){
 		return this.convertMinutesToOffset(this.get('minDuration'));
+	}),
+
+	maxDistance: computed('maxDuration', 'width', function(){
+		return this.convertMinutesToOffset(this.get('maxDuration'));
 	}),
 
 	convertMinutesToOffset(minutes){
@@ -146,6 +158,13 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	},
 
+	moveMarker(markerType, offset, sendAction = true){
+		this.set(markerType+'OffsetX',offset);
+		if(sendAction && this.attrs.onChange){
+			this.attrs.onChange(this.get('fromValue'), this.get('toValue'));
+		}
+	},
+
 	initAnalyzeDOM: on('didInsertElement', function(){
 		this.analyzeDOM();
 		this.initialMarkerPlacement();
@@ -177,24 +196,25 @@ export default Ember.Component.extend(ResizeMixin, {
 			offsetX2 = relativeX - distance;
 		}
 
+
 		let hitMax = offsetX2 > this.get('width');
-		let hitMin = offsetX2 < 0;
+		let	hitMin = offsetX2 < 0;
 		let isWithinRange = !hitMax && !hitMin;
 
 		if(isWithinRange){
 
-			this.set(activeMarker+'OffsetX', relativeX);
-			this.set(passiveMarker+'OffsetX', offsetX2);
+			this.moveMarker(activeMarker, relativeX, false);
+			this.moveMarker(passiveMarker, offsetX2, false);
 			this.set(passiveMarker+'Dragging', true);
 
 		} else {
 
 			if(hitMax){
-				this.set(passiveMarker+'OffsetX', this.get('width'));
+				this.moveMarker(passiveMarker, this.get('width'));
 			}
 
 			if(hitMin){
-				this.set(passiveMarker+'OffsetX',0);
+				this.moveMarker(passiveMarker, 0);
 			}
 		}
 	},
@@ -208,8 +228,14 @@ export default Ember.Component.extend(ResizeMixin, {
 
 			let relativeX = event.clientX - this.get('positionLeft');
 
-			let overMax = relativeX > this.get('width');
-			let overMin = relativeX < 0;
+			let	overMax = relativeX > this.get('width');
+			let	overMin = relativeX < 0;
+
+			if(this.get('maxDuration') && !event.ctrlKey){
+
+				overMax = overMax || relativeX > this.get('currentMax');
+				overMin = overMin || relativeX < this.get('currentMin');
+			}
 
 			let isWithinRange = !overMax && !overMin;
 			let isChronological = false;
@@ -231,13 +257,11 @@ export default Ember.Component.extend(ResizeMixin, {
 
 				if(isChronological){
 
-					this.set(activeMarker+'OffsetX', relativeX);
+					this.moveMarker(activeMarker, relativeX);
 					this.set('shouldUpdateDistance', true);
 
 				} else {
-
-					this.set(activeMarker+'OffsetX', this.get(passiveMarker+'OffsetX') + correction);
-					
+					this.moveMarker(activeMarker, this.get(passiveMarker+'OffsetX') + correction);
 				}
 			} 
 			

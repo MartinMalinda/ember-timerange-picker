@@ -56,6 +56,8 @@ var markerStruct = function($marker, location, $container, width){
   this.moveAbs = function(percentageX){
 
     var containerOffsetLeft = this.$container.offset().left;
+    this.previousOffset = this.getOffset();
+
 
     Ember.run(() => {
       $.extend(this.mousemove, {
@@ -70,7 +72,7 @@ var markerStruct = function($marker, location, $container, width){
 
   this.smoothDrag = function(percentageX){
 
-    var currentPercentage = Math.round(this.getX()/this.$container.width()*100);
+    var currentPercentage = Math.round(this.getP()*100);
     var leftDirection = percentageX < currentPercentage;
 
     var i = currentPercentage;
@@ -130,13 +132,14 @@ test('it renders', function(assert) {
 });
 
 test('marker has dragging class during dragging', function(assert) {
-  assert.expect(4);
+  assert.expect(6);
 
   this.render(hbs`
     {{timerange-picker class="time-range-picker" initFromValue="8:00" initToValue="18:00"}} 
   `);
 
   var marker = new markerStruct(this.$('.marker:eq(0)'), 'left', this.$('.time-range-picker:eq(0)'), 28);
+  var rightMarker = new markerStruct(this.$('.marker:eq(1)'), 'right', this.$('.time-range-picker:eq(0)'), 28);
 
   Ember.run(() => marker.$m.trigger('mousedown'));
   assert.ok(marker.$m.hasClass('dragging'), 'Marker has class dragging after mousedown');
@@ -146,9 +149,17 @@ test('marker has dragging class during dragging', function(assert) {
   assert.ok(marker.$m.hasClass('dragging'), 'Marker has class dragging again after mousedown');
   Ember.run(() => marker.$container.trigger('mouseleave'));
   assert.ok(!marker.$m.hasClass('dragging'), 'Marker has not dragging class after mouseleave');
+
+  var ctrlMousemove = $.Event('mousemove');
+  ctrlMousemove.ctrlKey = true;
+  Ember.run(() => marker.$m.trigger('mousedown'));
+  Ember.run(() => marker.$container.trigger(ctrlMousemove));
+  assert.ok(marker.$m.hasClass('dragging'), 'If ctrl is pressed, left marker has class dragging');
+  assert.ok(rightMarker.$m.hasClass('dragging'), 'If ctrl is pressed, right marker has class dragging');
+
 });
 
-test('marker moves properly when dragged', function(assert){
+test('markers move properly when dragged', function(assert){
   assert.expect(12);
 
   var interval = 15;
@@ -193,7 +204,13 @@ test('marker moves properly when dragged', function(assert){
   assert.notEqual(leftMarker.previousOffset, leftMarker.getOffset(), 'If ctrl is pressed, the markers actually moved during dragging');
   assert.equal(distanceBefore, distanceAfter, 'If ctrl is pressed, the distance stays the same during dragging');
 
+  
   leftMarker.ctrlKey = false;
+  rightMarker.ctrlKey = true;
+  rightMarker.moveAbs(0.9);
+  assert.notEqual(rightMarker.getOffset(),rightMarker.previousOffset, 'If ctrl is pressed and right marker is dragged to the right, it moves');
+  rightMarker.ctrlKey = false;
+
   leftMarker.moveAbs(0.4);
   rightMarker.moveAbs(0.8);
   leftMarker.ctrlKey = true;
@@ -235,7 +252,7 @@ test('setting minimum and maximum durations', function(assert){
   var maxDuration = 300;
 
   this.render(hbs`
-    {{timerange-picker minDuration="60" maxDuration="300" class="time-range-picker" initFromValue="0:00" initToValue="24:00"}} 
+    {{timerange-picker minDuration="60" maxDuration="300" class="time-range-picker" initFromValue="08:00" initToValue="10:00"}} 
   `);
 
   var leftMarker = new markerStruct(this.$('.marker:eq(0)'), 'left', this.$('.tp-container:eq(0)'), 28);
@@ -245,7 +262,8 @@ test('setting minimum and maximum durations', function(assert){
   var expectedDistance = Math.round(minDuration * $container.width() / (60*24));
 
   leftMarker.moveAbs(0.5);
-  rightMarker.moveAbs(0.5);
+  rightMarker.moveAbs(0.4);
+  // rightMarker.smoothDrag(0.4);
 
   var actualDistance = getDistance(leftMarker, rightMarker);
   assert.equal(actualDistance, expectedDistance, 'Markers should stop at minimal distance if minDuration is set');
@@ -254,28 +272,26 @@ test('setting minimum and maximum durations', function(assert){
   rightMarker.moveAbs(1);
   expectedDistance = Math.round(maxDuration * $container.width() / (60*24));
   actualDistance = getDistance(leftMarker, rightMarker);
-  assert.equal(actualDistance, expectedDistance, 'Markers should stop at maximal distance if minDuration is set')
+  assert.equal(actualDistance, expectedDistance, 'Markers should stop at maximal distance if maxDuration is set');
 
 });
 
-test('closure actions', function(assert){
+test('closure actions are called at the right times', function(assert){
   assert.expect(2);
 
   this.set('afterDrag', () => assert.ok(true, 'afterDrag action has been called after moving marker'));
   this.set('onChange', () => assert.ok(true, 'onChange action has been called after to and from value changed'));
 
   this.render(hbs`
-    {{timerange-picker afterDrag=(action afterDrag) class="time-range-picker" initFromValue="0:00" initToValue="24:00"}} 
+    {{timerange-picker afterDrag=(action afterDrag) onChange=(action onChange) class="time-range-picker" initFromValue="0:00" initToValue="24:00"}} 
   `);
 
   var leftMarker = new markerStruct(this.$('.marker:eq(0)'), 'left', this.$('.tp-container:eq(0)'), 28);
-  var rightMarker = new markerStruct(this.$('.marker:eq(1)'), 'right', this.$('.tp-container:eq(0)'), 28);
-  var $container = leftMarker.$container;
+  // var rightMarker = new markerStruct(this.$('.marker:eq(1)'), 'right', this.$('.tp-container:eq(0)'), 28);
+  // var $container = leftMarker.$container;
 
   leftMarker.moveAbs(0.4); 
   // afterDrag should be called now
   // onChange should be called now
-
-
 
 });

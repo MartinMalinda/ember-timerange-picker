@@ -10,8 +10,8 @@ ToDO
  - [x] sync marker movement on ctrlKey
  - [ ] settable min and max time
  - [ ] improve the code quality of the mouseMove function
- - [ ] interval set by a param
- - [ ] set marker width on didInsertElement
+ - [x] interval set by a param
+ - [x] set marker width on didInsertElement
  - [ ] write tests
   - [ ] test the onChange and afterDrag function
   - [ ] test the interval
@@ -19,6 +19,6 @@ ToDO
   - [x] test ctrlKey dragging
   - [x] test dragging out of range
  - [ ] render into SVG (optionally?)
- - [ ] settable minDuration
+ - [x] settable minDuration
  - [ ] settable maxDuration
  - [ ] update chronology check when ctrlKey is pressed

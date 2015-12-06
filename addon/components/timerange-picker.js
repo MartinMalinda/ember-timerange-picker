@@ -28,15 +28,22 @@ export default Ember.Component.extend(ResizeMixin, {
 		return this.get('width')*this.get('interval')/(60*24);
 	}),
 
-	fromValue: computed('width','fromOffsetXStepped', function(){
+	fromMinutes: computed('width','fromOffsetXStepped', function(){
 		var totalminutes = Math.round((this.get('fromOffsetXStepped'))/this.get('width')*60*24);
-		return this.convertMinutesToTime(totalminutes);
+		return totalminutes;
 	}),
 
-	toValue: computed('width','toOffsetXStepped', function(){
-		var totalminutes = Math.round((this.get('toOffsetXStepped'))/this.get('width')*60*24);
-		return this.convertMinutesToTime(totalminutes);
+	fromValue: computed('fromMinutes', function(){
+		return this.convertMinutesToTime(this.get('fromMinutes'));
+	}),
 
+	toMinutes: computed('width','toOffsetXStepped', function(){
+		var totalminutes = Math.round((this.get('toOffsetXStepped'))/this.get('width')*60*24);
+		return totalminutes;
+	}),
+
+	toValue: computed('toMinutes', function(){
+		return this.convertMinutesToTime(this.get('toMinutes'));
 	}),
 
 	toOffsetXStepped: computed('toOffsetX','stepper', function(){
@@ -48,6 +55,20 @@ export default Ember.Component.extend(ResizeMixin, {
 
 	markerDistance: computed(function(){
 		return Math.abs(this.get('toOffsetXStepped') -this.get('fromOffsetXStepped'));
+	}),
+
+	pickedDuration: computed('fromMinutes','toMinutes', function(){
+		let minutes = this.get('toMinutes') - this.get('fromMinutes');
+		return this.convertMinutesToTime(minutes); 
+	}),
+
+	minDuration: computed(function(){
+		return this.get('interval');
+	}),
+
+	minDistance: computed('minDuration','width', function(){
+		// console.log( this.get('minDuration') * this.get('width'));
+		return this.get('minDuration') * this.get('width')/(60*24);
 	}),
 
 
@@ -172,16 +193,16 @@ export default Ember.Component.extend(ResizeMixin, {
 			var correction = 0;
 
 			if(nowDragging === 'from'){
-				isChronological = relativeX + this.get('stepper') < this.get('toOffsetX');
+				isChronological = relativeX + this.get('minDistance') < this.get('toOffsetX');
 				otherMarker = 'to';
-				correction = - this.get('stepper');
+				correction = - this.get('minDistance');
 			} else {
-				isChronological = relativeX - this.get('stepper') > this.get('fromOffsetX');
+				isChronological = relativeX - this.get('minDistance') > this.get('fromOffsetX');
 				otherMarker = 'from';
-				correction = this.get('stepper');
+				correction = this.get('minDistance');
 			} 
 			
-			if(isChronological){
+			if(isChronological || event.ctrlKey){
 
 				if(isWithinRange){
 

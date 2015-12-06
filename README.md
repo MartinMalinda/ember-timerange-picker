@@ -13,6 +13,11 @@ ToDO
  - [ ] interval set by a param
  - [ ] set marker width on didInsertElement
  - [ ] write tests
+  - [ ] test the onChange and afterDrag function
+  - [ ] test the interval
+  - [x] test resize functionality
+  - [x] test ctrlKey dragging
+  - [x] test dragging out of range
  - [ ] render into SVG (optionally?)
  - [ ] settable minDuration
  - [ ] settable maxDuration

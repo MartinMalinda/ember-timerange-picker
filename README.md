@@ -12,6 +12,9 @@ ToDO
  - [ ] improve the code quality of the mouseMove function
  - [x] interval set by a param
  - [x] set marker width on didInsertElement
+ - [ ] AM/PM format
+ - [ ] minutes format
+ - [ ] onChange function
  - [ ] write tests
   - [ ] test the onChange and afterDrag function
   - [ ] test the interval

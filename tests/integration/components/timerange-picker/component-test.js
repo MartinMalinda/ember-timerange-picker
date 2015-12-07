@@ -295,3 +295,39 @@ test('closure actions are called at the right times', function(assert){
   // onChange should be called now
 
 });
+
+test('settable min and max time', function(assert){
+  assert.expect(4);
+
+  this.set('minTime', "06:00");
+  this.set('maxTime', "12:00");
+
+  this.render(hbs`
+    {{timerange-picker minTime=minTime maxTime=maxTime class="time-range-picker" initFromValue="08:00" initToValue="10:00"}} 
+  `);
+
+  var leftMarker = new markerStruct(this.$('.marker:eq(0)'), 'left', this.$('.tp-container:eq(0)'), 28);
+  var rightMarker = new markerStruct(this.$('.marker:eq(1)'), 'right', this.$('.tp-container:eq(0)'), 28);
+
+  leftMarker.moveAbs(0);
+  rightMarker.moveAbs(1);
+
+  assert.equal(this.$().text().trim(), `${this.get('minTime')} - ${this.get('maxTime')} (06:00)`, 'When markers move to the max and min offset, they have the minTime and maxTime values.');
+
+  leftMarker.ctrlKey = true;
+  leftMarker.moveAbs(0.3);
+
+  assert.equal(this.$().text().trim(), `${this.get('minTime')} - ${this.get('maxTime')} (06:00)`, 'After sync dragging leftMarker, markers still stay in min and max range');
+
+  leftMarker.ctrlKey = false;
+  rightMarker.ctrlKey = true;
+  rightMarker.moveAbs(0.9);
+  rightMarker.ctrlKey = false;
+
+  assert.equal(this.$().text().trim(), `${this.get('minTime')} - ${this.get('maxTime')} (03:00)`, 'After sync dragging rightMarker, markers still stay in min and max range');
+
+  leftMarker.moveAbs(0.5);
+
+  assert.equal(this.$().text().trim(), `09:00 - ${this.get('maxTime')} (06:00)`, 'Half way between 06:00 and 12:00, the value should be 09:00');
+
+});

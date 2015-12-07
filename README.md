@@ -8,7 +8,7 @@ ToDO
  - [x] require chronology
  - [x] implement container to provide whitespace
  - [x] sync marker movement on ctrlKey
- - [ ] settable min and max time
+ - [x] settable min and max time
  - [ ] improve the code quality of the mouseMove function
  - [x] interval set by a param
  - [x] set marker width on didInsertElement
@@ -29,3 +29,7 @@ ToDO
   - [ ] sync dragging if limits are reached
   - [ ] make sure X = limit if limit is reached
  - [ ] update chronology check when ctrlKey is pressed
+ - [ ] write custom computed macros
+ - [ ] synchronous dragging when dragging space between markers
+  - [ ] styles
+  - [ ] functionality

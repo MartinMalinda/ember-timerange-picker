@@ -15,6 +15,10 @@ export default Ember.Component.extend(ResizeMixin, {
 	fromOffsetX: 0,
 	interval: 15,
 
+	minTime: "00:00",
+	maxTime: "24:00",
+
+
 	width: 0,
 	markerWidth: 28,
 
@@ -23,6 +27,16 @@ export default Ember.Component.extend(ResizeMixin, {
 	containerClass: 'tp-container',
 
 	shouldUpdateDistance: false,
+
+	minMinutes: computed('minTime', function(){
+		return this.convertTimeToMinutes(this.get('minTime'));
+	}),
+	maxMinutes: computed('maxTime','minMinutes', function(){
+		return this.convertTimeToMinutes(this.get('maxTime'));
+	}),
+	minutesInRange: computed('minMinutes', 'maxMinutes', function(){
+		return this.get('maxMinutes') - this.get('minMinutes');
+	}), 
 
 	passiveMarker: computed('activeMarker', function(){
 		let draggedMarker = this.get('activeMarker');
@@ -37,7 +51,7 @@ export default Ember.Component.extend(ResizeMixin, {
 	}),
 
 	stepper: computed('width', 'interval', function(){
-		return this.get('width')*this.get('interval')/(60*24);
+		return this.get('width')*this.get('interval') / this.get('minutesInRange');
 	}),
 
 	fromMinutes: computed('width','fromOffsetXStepped', function(){
@@ -80,9 +94,7 @@ export default Ember.Component.extend(ResizeMixin, {
 		return this.convertMinutesToTime(minutes); 
 	}),
 
-	minDuration: computed(function(){
-		return this.get('interval');
-	}),
+	minDuration: computed.alias('interval'),
 
 	minDistance: computed('minDuration','width', function(){
 		return this.convertMinutesToOffset(this.get('minDuration'));
@@ -93,11 +105,11 @@ export default Ember.Component.extend(ResizeMixin, {
 	}),
 
 	convertMinutesToOffset(minutes){
-		return Math.round(minutes * this.get('width') / (60*24));
+		return Math.round((minutes) * this.get('width') / this.get('minutesInRange'));
 	},
 
 	convertOffsetToMinutes(offset){
-		return Math.round(offset / this.get('width')*60*24);
+		return Math.round(offset / this.get('width')* this.get('minutesInRange')) + this.get('minMinutes');
 	},
 
 	convertTimeToMinutes(timeString){
@@ -109,14 +121,15 @@ export default Ember.Component.extend(ResizeMixin, {
 	},
 
 	convertMinutesToTime(totalminutes){
-		var hours = Math.floor(totalminutes / 60);
-		if(hours === 0) {
-			hours = "00";
+		var hours = (Math.floor(totalminutes / 60)).toString();
+		if(hours.length === 1){
+			hours = "0"+hours;
 		}
-		var minutes = totalminutes % 60;
-		if(minutes === 0){
-			minutes = "00";
+		var minutes = (totalminutes % 60).toString();
+		if(minutes.length === 1){
+			minutes = "0"+minutes;
 		}
+		
 		return `${hours}:${minutes}`;
 	},
 
@@ -139,10 +152,10 @@ export default Ember.Component.extend(ResizeMixin, {
 	initialMarkerPlacement(){
 		Ember.run.schedule('afterRender', () => {
 			var fromMinutes = this.convertTimeToMinutes(this.get('initFromValue'));
-			var toMinutes = this.convertTimeToMinutes(this.get('initToValue'));
+			var toMinutes = this.convertTimeToMinutes(this.get('initToValue')) ;
 
-			this.set('fromOffsetX',fromMinutes/(60*24)*this.get('width'));
-			this.set('toOffsetX',toMinutes/(60*24)*this.get('width'));
+			this.set('fromOffsetX',this.convertMinutesToOffset(fromMinutes - this.get('minMinutes')));
+			this.set('toOffsetX', this.convertMinutesToOffset(toMinutes - this.get('minMinutes')));
 		});
 						
 	},

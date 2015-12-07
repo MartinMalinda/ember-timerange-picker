@@ -8,6 +8,7 @@ moduleForComponent('timerange-picker', 'Integration | Component | timerange pick
 });
 
 
+var interval = 15;
 
 
 var markerStruct = function($marker, location, $container, width){
@@ -122,10 +123,10 @@ test('it renders', function(assert) {
   assert.expect(4);
 
   this.render(hbs`
-    {{timerange-picker class="time-range-picker" containerClass="my-container" initFromValue="8:00" initToValue="18:00"}}
+    {{timerange-picker class="time-range-picker" containerClass="my-container" initFromValue="08:00" initToValue="18:00"}}
   `);
 
-  assert.equal(this.$().text().trim(), '8:00 - 18:00 (10:00)', 'Times are displayed');
+  assert.equal(this.$().text().trim(), '08:00 - 18:00 (10:00)', 'Times are displayed');
   assert.equal(this.$('.my-container').length, 1, 'There is 1 container present');
   assert.equal(this.$('.marker').length, 2, 'There are 2 markers present');
   assert.equal(this.$('.line').length, 1, 'There is 1 line present');
@@ -135,7 +136,7 @@ test('marker has dragging class during dragging', function(assert) {
   assert.expect(6);
 
   this.render(hbs`
-    {{timerange-picker class="time-range-picker" initFromValue="8:00" initToValue="18:00"}} 
+    {{timerange-picker class="time-range-picker" initFromValue="08:00" initToValue="18:00"}} 
   `);
 
   var marker = new markerStruct(this.$('.marker:eq(0)'), 'left', this.$('.time-range-picker:eq(0)'), 28);
@@ -162,7 +163,6 @@ test('marker has dragging class during dragging', function(assert) {
 test('markers move properly when dragged', function(assert){
   assert.expect(12);
 
-  var interval = 15;
 
   this.render(hbs`
     {{timerange-picker class="time-range-picker" initFromValue="0:00" initToValue="24:00"}} 
@@ -184,7 +184,7 @@ test('markers move properly when dragged', function(assert){
 
 
   leftMarker.moveAbs(0.5);
-  rightMarker.moveAbs(0.4);
+  rightMarker.moveAbs(0.1);
 
   assert.equal(leftMarker.getOffset() + stepper, rightMarker.getOffset(), 'Markers collide at minimal distance when being dragged over themselves');
 
@@ -308,6 +308,12 @@ test('settable min and max time', function(assert){
 
   var leftMarker = new markerStruct(this.$('.marker:eq(0)'), 'left', this.$('.tp-container:eq(0)'), 28);
   var rightMarker = new markerStruct(this.$('.marker:eq(1)'), 'right', this.$('.tp-container:eq(0)'), 28);
+  var $container = leftMarker.$container;
+  var stepper = Math.round($container.width()*interval/(60*24));
+
+
+  assert.equal(this.$().text().trim(), `08:00 - 10:00 (02:00)`, 'If min and max time is set, correct times render');
+
 
   leftMarker.moveAbs(0);
   rightMarker.moveAbs(1);
@@ -324,10 +330,14 @@ test('settable min and max time', function(assert){
   rightMarker.moveAbs(0.9);
   rightMarker.ctrlKey = false;
 
-  assert.equal(this.$().text().trim(), `${this.get('minTime')} - ${this.get('maxTime')} (03:00)`, 'After sync dragging rightMarker, markers still stay in min and max range');
+  assert.equal(this.$().text().trim(), `${this.get('minTime')} - ${this.get('maxTime')} (06:00)`, 'After sync dragging rightMarker, markers still stay in min and max range');
 
   leftMarker.moveAbs(0.5);
 
-  assert.equal(this.$().text().trim(), `09:00 - ${this.get('maxTime')} (06:00)`, 'Half way between 06:00 and 12:00, the value should be 09:00');
+  assert.equal(this.$().text().trim(), `09:00 - ${this.get('maxTime')} (03:00)`, 'Half way between 06:00 and 12:00, the value should be 09:00');
+
+  rightMarker.moveAbs(0.1);
+
+  assert.equal(leftMarker.getOffset()+ stepper*4, rightMarker.getOffset() , 'Markers collide properly if minTime and maxTime are set');
 
 });

@@ -2,12 +2,12 @@
 {{!-- afterDrag=(action "updateOpeningHours" ) --}}
 {{timerange-picker
 	interval="15"
-	minDuration="60" 
-	maxDuration="180"
+	minTime="06:00"
+	maxTime="12:00"
 	class="time-range-picker"
 	afterDrag=(action "getTimeRange") 
 	initFromValue="08:00"
-	initToValue="09:00"
+	initToValue="10:00"
 }}
 
 {{outlet}}

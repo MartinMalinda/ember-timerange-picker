@@ -32,17 +32,21 @@
  - control + drag for synchronous dragging of both markers
 
 
+**The addon does not currently come with styling, feel free to grab this SCSS**
 ```scss
 * {box-sizing:border-box;}
 $red:#DB2828; 
 
 .time-range-picker {
 	width: 100%;
-	height: 120px;
+	height: 75px;
 	position: relative;
-	border: 1px solid $red;
+	border: 1px solid transparentize(grey, 0.8);
+	border-radius: 5px;
+	background: transparentize(grey, 0.9);
 	user-select:none;
 	-webkit-user-select:none;
+	padding: 25px 30px;
 
 	.tp-container {
 		width: 96%;

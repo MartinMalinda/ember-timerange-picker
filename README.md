@@ -16,17 +16,17 @@
 ```
 
 **Supported attrs**:
-Interval: minimal amount of minutes needed to change value (default: 15)
-maxTime: Maximal time (default: 24:00)
-minTime: Minimal time (defualt: 00:00)
-minDuration: Minimal duration that can be picked (defaults to Interval, setting this to 0 is not reccomended)
-maxDuration: Maximum duration that can be picked - **WIP**
-class: Applied to the whole element
-containerClass: Applied to the internal container element
-afterDrag(fromTime, toTime): Action called after the dragging has ended
-onChange(fromTime, toTime): Action called whenever any value changed
-initFromValue: starting value of the "from" marker // binding not supported atm
-initToValue: starting value of the "to" marker // binding not supported atm
+ - Interval: minimal amount of minutes needed to change value (default: 15)
+ - maxTime: Maximal time (default: 24:00)
+ - minTime: Minimal time (defualt: 00:00)
+ - minDuration: Minimal duration that can be picked (defaults to Interval, setting this to 0 is not reccomended)
+ - maxDuration: Maximum duration that can be picked - **WIP**
+ - class: Applied to the whole element
+ - containerClass: Applied to the internal container element
+ - afterDrag(fromTime, toTime): Action called after the dragging has ended
+ - onChange(fromTime, toTime): Action called whenever any value changed
+ - initFromValue: starting value of the "from" marker // binding not supported atm
+ - initToValue: starting value of the "to" marker // binding not supported atm
 
 **Features**
  - control + drag for synchronous dragging of both markers

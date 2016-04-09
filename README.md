@@ -29,7 +29,7 @@
  - initToValue: starting value of the "to" marker // binding not supported atm
 
 **Features**
- - control + drag for synchronous dragging of both markers
+ - control + drag for synchronous dragging of both markers (TODO: make it work with cmd button for mac)
 
 
 **The addon does not currently come with styling, feel free to grab this SCSS**
@@ -110,6 +110,7 @@ ToDO
  - [x] implement container to provide whitespace
  - [x] sync marker movement on ctrlKey
  - [x] settable min and max time
+ - [x] touch support
  - [ ] improve the code quality of the mouseMove function
  - [x] interval set by a param
  - [x] set marker width on didInsertElement

@@ -1,11 +1,12 @@
 import Ember from 'ember';
 import layout from '../templates/components/timerange-picker';
 import ResizeMixin from 'ember-resize-mixin/main';
+import RecognizerMixin from 'ember-gestures/mixins/recognizers';
 
 const { computed, on } = Ember;
 
-export default Ember.Component.extend(ResizeMixin, {
-
+export default Ember.Component.extend(ResizeMixin, RecognizerMixin, {
+	recognizers: 'pan swipe',
 	layout: layout,
 
 	fromDragging: false,
@@ -232,14 +233,19 @@ export default Ember.Component.extend(ResizeMixin, {
 		}
 	},
 
-
 	mouseMove(event){
+		this.move(event, event.clientX);
+	},
+
+
+	move(event, x){
 
 		let activeMarker = this.get('activeMarker');
 
+
 		if(activeMarker){
 
-			let relativeX = event.clientX - this.get('positionLeft');
+			let relativeX = x - this.get('positionLeft');
 
 			let	overMax = relativeX > this.get('width');
 			let	overMin = relativeX < 0;
@@ -282,12 +288,32 @@ export default Ember.Component.extend(ResizeMixin, {
 		}
 	},
 
+	swipe(event){
+		console.log(event);
+	},
+
+	touchMove(event){
+		this.move(event, event.originalEvent.touches[0].clientX);
+	},
+
 	mouseUp(){
 		this.stopTheDragging();
 	},
 
+	panUp(event){
+		this.mouseUp(event);
+	},
+
 	mouseLeave(){
 		this.stopTheDragging();
+	},
+
+	panCancel(event){
+		this.mouseLeave(event);
+	},
+
+	panEnd(event){
+		this.mouseLeave(event);
 	},
 
 

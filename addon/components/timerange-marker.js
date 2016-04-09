@@ -1,8 +1,10 @@
 import Ember from 'ember';
+import RecognizerMixin from 'ember-gestures/mixins/recognizers';
 
 const { computed, on } = Ember;
 
-export default Ember.Component.extend({
+export default Ember.Component.extend(RecognizerMixin, {
+	recognizers: 'pan',
 
 	classNameBindings: ['type','dragging:dragging'],
 	classNames: ['marker'],
@@ -21,6 +23,11 @@ export default Ember.Component.extend({
 		this.set('dragging', true);
 		this.attrs.startDragging(this.get('type'));
 	},
+
+	panStart(){
+		this.mouseDown();
+	},
+
 	setWidth: on('didInsertElement', function(){
 		this.set('width', this.$().outerWidth());
 	})

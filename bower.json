@@ -11,6 +11,10 @@
     "loader.js": "ember-cli/loader.js#3.2.1",
     "qunit": "~1.18.0",
     "ember": "~2.2.0",
-    "ember-data": "~2.2.1"
+    "ember-data": "~2.2.1",
+    "hammer-time": "1.0.0"
+  },
+  "resolutions": {
+    "ember": "~2.2.0"
   }
 }

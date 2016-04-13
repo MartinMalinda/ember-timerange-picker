@@ -1,5 +1,4 @@
 # Ember-timerange-picker
-##WIP
 
 ![Addon preview](https://i.imgur.com/rI5se3S.png)
 

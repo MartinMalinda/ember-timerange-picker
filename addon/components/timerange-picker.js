@@ -2,11 +2,25 @@ import Ember from 'ember';
 import layout from '../templates/components/timerange-picker';
 import ResizeMixin from 'ember-resize-mixin/main';
 import RecognizerMixin from 'ember-gestures/mixins/recognizers';
+import {offsetToMinutes,
+				minutesToOffset, 
+				timeToMinutes,
+				minutesToTime,
+				convertTimeToMinutes,
+				convertMinutesToTime} from '../macros/convert';
+import {sumOf, substractSecondFromFirst} from '../macros/math';
 
 const { computed, on } = Ember;
 
+function makeStepped(dependentKey){
+		return computed(dependentKey,'stepper', function(){	
+			let value = this.get(dependentKey);
+			return Math.round(value / this.get('stepper')) * this.get('stepper');
+		});
+}
+
 export default Ember.Component.extend(ResizeMixin, RecognizerMixin, {
-	recognizers: 'pan swipe',
+	recognizers: 'pan',
 	layout: layout,
 
 	fromDragging: false,
@@ -28,16 +42,29 @@ export default Ember.Component.extend(ResizeMixin, RecognizerMixin, {
 	containerClass: 'tp-container',
 
 	shouldUpdateDistance: false,
+	
+	fromMinutes: offsetToMinutes('fromOffsetXStepped'),
+	toMinutes: offsetToMinutes('toOffsetXStepped'),
 
-	minMinutes: computed('minTime', function(){
-		return this.convertTimeToMinutes(this.get('minTime'));
-	}),
-	maxMinutes: computed('maxTime','minMinutes', function(){
-		return this.convertTimeToMinutes(this.get('maxTime'));
-	}),
-	minutesInRange: computed('minMinutes', 'maxMinutes', function(){
-		return this.get('maxMinutes') - this.get('minMinutes');
-	}), 
+	// Strings to be displayed in the component
+	fromValue: minutesToTime('fromMinutes'),
+	toValue: minutesToTime('toMinutes'),
+
+	minDuration: computed.alias('interval'),
+	minDistance: minutesToOffset('minDuration'),
+	maxDistance: minutesToOffset('maxDuration'),
+
+	minMinutes: timeToMinutes('minTime'),
+	maxMinutes: timeToMinutes('maxTime'),
+
+	currentMax: sumOf('maxDistance', 'fromOffsetXStepped'),
+	currentMin: substractSecondFromFirst('toOffsetXStepped','maxDistance'),
+
+	// amount of minutes between minTime to maxTime
+	minutesInRange: substractSecondFromFirst('maxMinutes', 'minMinutes'),
+
+	toOffsetXStepped: makeStepped('toOffsetX'),
+	fromOffsetXStepped: makeStepped('fromOffsetX'),
 
 	passiveMarker: computed('activeMarker', function(){
 		let draggedMarker = this.get('activeMarker');
@@ -52,38 +79,7 @@ export default Ember.Component.extend(ResizeMixin, RecognizerMixin, {
 	}),
 
 	stepper: computed('width', 'interval', function(){
-		return this.get('width')*this.get('interval') / this.get('minutesInRange');
-	}),
-
-	fromMinutes: computed('width','fromOffsetXStepped', function(){
-		return this.convertOffsetToMinutes(this.get('fromOffsetXStepped'));
-	}),
-
-	fromValue: computed('fromMinutes', function(){
-		return this.convertMinutesToTime(this.get('fromMinutes'));
-	}),
-
-	toMinutes: computed('width','toOffsetXStepped', function(){
-		return this.convertOffsetToMinutes(this.get('toOffsetXStepped'));
-	}),
-
-	toValue: computed('toMinutes', function(){
-		return this.convertMinutesToTime(this.get('toMinutes'));
-	}),
-
-	toOffsetXStepped: computed('toOffsetX','stepper', function(){
-		return this.makeStepped(this.get('toOffsetX'));
-	}),
-	fromOffsetXStepped: computed('fromOffsetX','stepper', function(){
-		return this.makeStepped(this.get('fromOffsetX'));
-	}),
-
-	currentMax: computed('maxDistance','fromOffsetXStepped', function(){
-		return this.get('maxDistance') + this.get('fromOffsetXStepped');
-	}),
-
-	currentMin: computed('maxDistance', 'toOffsetXStepped', function(){
-		return this.get('toOffsetXStepped') - this.get('maxDistance');
+		return this.get('width') * this.get('interval') / this.get('minutesInRange');
 	}),
 
 	markerDistance: computed(function(){
@@ -92,17 +88,7 @@ export default Ember.Component.extend(ResizeMixin, RecognizerMixin, {
 
 	pickedDuration: computed('fromMinutes','toMinutes', function(){
 		let minutes = this.get('toMinutes') - this.get('fromMinutes');
-		return this.convertMinutesToTime(minutes); 
-	}),
-
-	minDuration: computed.alias('interval'),
-
-	minDistance: computed('minDuration','width', function(){
-		return this.convertMinutesToOffset(this.get('minDuration'));
-	}),
-
-	maxDistance: computed('maxDuration', 'width', function(){
-		return this.convertMinutesToOffset(this.get('maxDuration'));
+		return convertMinutesToTime(minutes); 
 	}),
 
 	convertMinutesToOffset(minutes){
@@ -111,31 +97,6 @@ export default Ember.Component.extend(ResizeMixin, RecognizerMixin, {
 
 	convertOffsetToMinutes(offset){
 		return Math.round(offset / this.get('width')* this.get('minutesInRange')) + this.get('minMinutes');
-	},
-
-	convertTimeToMinutes(timeString){
-
-		var minutes = parseInt(timeString.split(":")[1]);
-		var hours = parseInt(timeString.split(":")[0]);
-
-		return minutes + hours*60;
-	},
-
-	convertMinutesToTime(totalminutes){
-		var hours = (Math.floor(totalminutes / 60)).toString();
-		if(hours.length === 1){
-			hours = "0"+hours;
-		}
-		var minutes = (totalminutes % 60).toString();
-		if(minutes.length === 1){
-			minutes = "0"+minutes;
-		}
-		
-		return `${hours}:${minutes}`;
-	},
-
-	makeStepped(value){
-		return Math.round(value / this.get('stepper')) * this.get('stepper');
 	},
 
 	analyzeDOM(){
@@ -152,8 +113,8 @@ export default Ember.Component.extend(ResizeMixin, RecognizerMixin, {
 
 	initialMarkerPlacement(){
 		Ember.run.schedule('afterRender', () => {
-			var fromMinutes = this.convertTimeToMinutes(this.get('initFromValue'));
-			var toMinutes = this.convertTimeToMinutes(this.get('initToValue')) ;
+			var fromMinutes = convertTimeToMinutes(this.get('initFromValue'));
+			var toMinutes = convertTimeToMinutes(this.get('initToValue')) ;
 
 			this.set('fromOffsetX',this.convertMinutesToOffset(fromMinutes - this.get('minMinutes')));
 			this.set('toOffsetX', this.convertMinutesToOffset(toMinutes - this.get('minMinutes')));
@@ -204,6 +165,7 @@ export default Ember.Component.extend(ResizeMixin, RecognizerMixin, {
 		let distance = this.get('markerDistance');
 		let offsetX2 = 0;
 
+		// get offset of the second marker, add or substract distance from offsetX
 		if(passiveMarker === 'to'){
 			offsetX2 = relativeX + distance;
 		} else {
@@ -211,9 +173,9 @@ export default Ember.Component.extend(ResizeMixin, RecognizerMixin, {
 		}
 
 
-		let hitMax = offsetX2 > this.get('width');
-		let	hitMin = offsetX2 < 0;
-		let isWithinRange = !hitMax && !hitMin;
+		let didHitMax = offsetX2 > this.get('width');
+		let	didHitMin = offsetX2 < 0;
+		let isWithinRange = !didHitMax && !didHitMin;
 
 		if(isWithinRange){
 
@@ -223,11 +185,13 @@ export default Ember.Component.extend(ResizeMixin, RecognizerMixin, {
 
 		} else {
 
-			if(hitMax){
+			if(didHitMax){
+				// move marker as far right as possible
 				this.moveMarker(passiveMarker, this.get('width'));
 			}
 
-			if(hitMin){
+			if(didHitMin){
+				// move marker as far left as possible
 				this.moveMarker(passiveMarker, 0);
 			}
 		}
@@ -269,27 +233,25 @@ export default Ember.Component.extend(ResizeMixin, RecognizerMixin, {
 				correction = this.get('minDistance');
 			} 
 
-			if(isWithinRange && event.ctrlKey){
-				this.moveSynchronously(relativeX, activeMarker);
+			if(isWithinRange){
 
-			} else if (isWithinRange){
-
-				if(isChronological){
-
-					this.moveMarker(activeMarker, relativeX);
-					this.set('shouldUpdateDistance', true);
-
+				if(event.ctrlKey){
+					this.moveSynchronously(relativeX, activeMarker);
 				} else {
-					this.moveMarker(activeMarker, this.get(passiveMarker+'OffsetX') + correction);
+
+					if(isChronological){
+
+						this.moveMarker(activeMarker, relativeX);
+						this.set('shouldUpdateDistance', true);
+
+					} else {
+						this.moveMarker(activeMarker, this.get(passiveMarker+'OffsetX') + correction);
+					}
 				}
-			} 
-			
+			}
 
 		}
-	},
 
-	swipe(event){
-		console.log(event);
 	},
 
 	touchMove(event){

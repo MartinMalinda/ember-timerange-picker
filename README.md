@@ -1,5 +1,6 @@
 # Ember-timerange-picker
 
+DEMO: http://martinmalinda.github.io/ember-timerange-picker/
 ![Addon preview](https://i.imgur.com/rI5se3S.png)
 
 ```handlebars
